@@ -1,0 +1,55 @@
+# Builds the hub and the plugins for Intel and ARM NAS models and puts them on ghcr.io. The
+# catalog pins each by its digest (shown in the run's summary); it is signed by hand, never here.
+name: images
+
+on:
+  push:
+    branches: [main]
+    paths: ["*.go", "go.mod", "Dockerfile", "plugins/**", ".github/workflows/images.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - run: go vet ./... && go test ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: opentv-hub
+            context: .
+          - name: opentv-scout
+            context: plugins/scout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: VERSION=0.1.0
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          tags: |
+            ghcr.io/subz4242/${{ matrix.name }}:latest
+            ghcr.io/subz4242/${{ matrix.name }}:${{ github.sha }}
+      - run: echo "${{ matrix.name }} ${{ steps.push.outputs.digest }}" | tee -a "$GITHUB_STEP_SUMMARY"
