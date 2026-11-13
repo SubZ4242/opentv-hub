@@ -1,0 +1,17 @@
+# OpenTV Hub — einmal auf dem NAS einrichten (TrueNAS: Apps › Custom App › YAML; Synology:
+# Container Manager › Projekt; Portainer: Stack). Die OpenTV-App am iPhone füllt HUB_TOKEN aus.
+services:
+  opentv-hub:
+    image: ghcr.io/subz4242/opentv-hub:latest
+    container_name: opentv-hub
+    # Das Netz des NAS: der Hub erreicht seine Plugins auf ihren Ports und die App den Hub auf 35100.
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      HUB_TOKEN: "HIER_DEN_SCHLUESSEL_AUS_DER_APP"
+      TZ: Europe/Berlin
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - opentv-hub:/data
+volumes:
+  opentv-hub:

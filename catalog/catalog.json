@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "published": "2026-11-13T00:00:00Z",
+  "hub": {
+    "version": "0.1.0",
+    "image": "ghcr.io/subz4242/opentv-hub",
+    "digest": ""
+  },
+  "plugins": [
+    {
+      "id": "scout",
+      "name": "Entdecken",
+      "version": "1.0.0",
+      "image": "ghcr.io/subz4242/opentv-scout",
+      "digest": "",
+      "port": 35120,
+      "health": "/health",
+      "env": { "TZ": "Europe/Berlin" },
+      "volumes": { "data": "/app/data" }
+    }
+  ]
+}
