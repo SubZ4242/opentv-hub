@@ -41,13 +41,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # The hub's version as main.go has it, not a number written here.
+      - id: v
+        run: echo "version=$(sed -n 's/^var Version = "\(.*\)"/\1/p' main.go)" >> "$GITHUB_OUTPUT"
       - id: push
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           platforms: linux/amd64,linux/arm64
           push: true
-          build-args: VERSION=0.1.0
+          build-args: VERSION=${{ steps.v.outputs.version }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           tags: |
             ghcr.io/subz4242/${{ matrix.name }}:latest
