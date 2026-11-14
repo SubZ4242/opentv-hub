@@ -219,6 +219,23 @@ func (h *Hub) install(p Plugin, w Wish, cur Box, has bool) {
 			h.note(p.ID, why)
 		}
 	}
+	// A container of that name the hub did not make (Scout set up by hand before the hub, owner,
+	// 14.11.2026): it would block the name and the port. It is stopped and kept as "-vorher",
+	// for its owner to look at or delete; the hub's own one takes its place.
+	if !has {
+		if other, err := h.engine.Named(name); err == nil && other != "" {
+			aside := name + "-vorher"
+			if old, _ := h.engine.Named(aside); old != "" {
+				aside = fmt.Sprintf("%s-vorher-%d", name, time.Now().Unix())
+			}
+			log.Printf("%s: %s was not made by the hub: stopped, kept as %s", p.ID, name, aside)
+			_ = h.engine.Stop(other)
+			if err := h.engine.Rename(other, aside); err != nil {
+				h.note(p.ID, err.Error())
+				return
+			}
+		}
+	}
 	id, err := h.engine.Create(name, spec(p, w))
 	if err != nil {
 		back(err.Error())

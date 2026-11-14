@@ -23,6 +23,8 @@ type Engine interface {
 	Stop(id string) error
 	Remove(id string) error
 	Rename(id, name string) error
+	// Named finds a container by its exact name, the hub's or not ("" when none).
+	Named(name string) (string, error)
 }
 
 // Box is one of the hub's containers.
@@ -173,6 +175,25 @@ func (d *docker) Stop(id string) error {
 func (d *docker) Remove(id string) error {
 	return d.call("DELETE", "/containers/"+id+"?force=1", nil, nil)
 }
+func (d *docker) Named(name string) (string, error) {
+	var raw []struct {
+		ID    string   `json:"Id"`
+		Names []string `json:"Names"`
+	}
+	filter := url.QueryEscape(`{"name":["^/` + name + `$"]}`)
+	if err := d.call("GET", "/containers/json?all=1&filters="+filter, nil, &raw); err != nil {
+		return "", err
+	}
+	for _, c := range raw {
+		for _, n := range c.Names {
+			if strings.TrimPrefix(n, "/") == name {
+				return c.ID, nil
+			}
+		}
+	}
+	return "", nil
+}
+
 func (d *docker) Rename(id, name string) error {
 	return d.call("POST", "/containers/"+id+"/rename?name="+url.QueryEscape(name), nil, nil)
 }

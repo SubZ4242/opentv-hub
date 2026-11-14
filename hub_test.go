@@ -24,9 +24,20 @@ func (f *fake) Pull(image, digest string) error { f.pulled = append(f.pulled, di
 func (f *fake) List() ([]Box, error) {
 	var out []Box
 	for _, b := range f.boxes {
-		out = append(out, *b)
+		// As Docker's label filter: only the hub's own.
+		if b.Plugin != "" {
+			out = append(out, *b)
+		}
 	}
 	return out, nil
+}
+func (f *fake) Named(name string) (string, error) {
+	for _, b := range f.boxes {
+		if b.Name == name {
+			return b.ID, nil
+		}
+	}
+	return "", nil
 }
 func (f *fake) Create(name string, s Spec) (string, error) {
 	for _, b := range f.boxes {
@@ -187,5 +198,30 @@ func TestSpec(t *testing.T) {
 		Volumes: map[string]string{"data": "/app/data"}}, Wish{Settings: map[string]string{"A": "y"}})
 	if fmt.Sprint(s.Env) != "[A=y TZ=Europe/Berlin]" || fmt.Sprint(s.Binds) != "[opentv-scout-data:/app/data]" {
 		t.Fatalf("%+v", s)
+	}
+}
+
+func TestForeignContainerOfTheSameNameIsSetAside(t *testing.T) {
+	h, f, _ := setup(t, "sha256:a")
+	f.boxes["hand"] = &Box{ID: "hand", Name: "opentv-scout", Running: true}
+	if err := h.Want("scout", Wish{Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	h.Reconcile()
+	old := f.boxes["hand"]
+	if old == nil || old.Name != "opentv-scout-vorher" || old.Running {
+		t.Fatalf("hand-made container not set aside: %+v", old)
+	}
+	var ours *Box
+	for _, b := range f.boxes {
+		if b.Name == "opentv-scout" {
+			ours = b
+		}
+	}
+	if ours == nil || ours.Plugin != "scout" || !ours.Running {
+		t.Fatalf("hub's own Scout not running: %+v", f.boxes)
+	}
+	if note := h.Status()["plugins"].([]Report)[0].Note; note != "" {
+		t.Fatalf("note left: %s", note)
 	}
 }

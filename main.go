@@ -18,7 +18,7 @@ import (
 )
 
 // Version is set at build time (-X main.Version=…).
-var Version = "0.1.0"
+var Version = "0.1.1"
 
 const defaultCatalog = "https://raw.githubusercontent.com/SubZ4242/opentv-hub/main/catalog/catalog.json"
 
