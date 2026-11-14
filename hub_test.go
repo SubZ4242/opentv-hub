@@ -225,3 +225,17 @@ func TestForeignContainerOfTheSameNameIsSetAside(t *testing.T) {
 		t.Fatalf("note left: %s", note)
 	}
 }
+
+func TestSwitchKeepsSettings(t *testing.T) {
+	h, _, _ := setup(t, "sha256:a")
+	h.catalog.Plugins[0].Settings = []string{"X"}
+	if err := h.Want("scout", Wish{Enabled: true, Settings: map[string]string{"X": "1"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.Want("scout", Wish{Enabled: false}); err != nil {
+		t.Fatal(err)
+	}
+	if got := h.wishes["scout"].Settings["X"]; got != "1" {
+		t.Fatalf("setting lost on the switch: %q", got)
+	}
+}

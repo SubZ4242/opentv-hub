@@ -121,6 +121,11 @@ func (h *Hub) Want(id string, w Wish) error {
 			return fmt.Errorf("%s has no setting %q", id, k)
 		}
 	}
+	// The app's switch sends on/off only: the settings given before stay (the recorder's
+	// Dispatcharr address, 14.11.2026).
+	if w.Settings == nil {
+		w.Settings = h.wishes[id].Settings
+	}
 	h.wishes[id] = w
 	b, _ := json.MarshalIndent(h.wishes, "", "  ")
 	return writeFile(filepath.Join(h.data, "wishes.json"), b)
