@@ -1,10 +1,10 @@
 {
-  "version": 2,
-  "published": "2026-11-13T16:00:00Z",
+  "version": 3,
+  "published": "2026-11-14T02:40:00Z",
   "hub": {
-    "version": "0.1.0",
+    "version": "0.1.2",
     "image": "ghcr.io/subz4242/opentv-hub",
-    "digest": "sha256:2f7244d482afec1ffd134a1acbaac0dcc5b51ddef1409e4da35166d229f170e4"
+    "digest": "sha256:bf3b6a429aff7588ace6240e821dbddd6445dd20e435ff50e5d526f62d20772f"
   },
   "plugins": [
     {
@@ -20,6 +20,25 @@
       },
       "volumes": {
         "data": "/app/data"
+      }
+    },
+    {
+      "id": "rec",
+      "name": "Aufnahmen",
+      "version": "1.0.0",
+      "image": "ghcr.io/subz4242/opentv-rec",
+      "digest": "sha256:0fe528064156116cbea788de21e838679103229f89d130b5e18429f5c0472ee9",
+      "port": 35090,
+      "health": "/health",
+      "env": {
+        "TZ": "Europe/Berlin"
+      },
+      "settings": [
+        "DISPATCHARR"
+      ],
+      "volumes": {
+        "data": "/app/data",
+        "recordings": "/app/recordings"
       }
     }
   ]
